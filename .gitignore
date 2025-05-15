@@ -1,0 +1,7 @@
+.streamlit/
+.venv/
+Esempi/
+output/
+__pycache__/
+*.ipynb
+.DS_Store
