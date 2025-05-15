@@ -26,6 +26,7 @@ except KeyError:
 
 
 # Funzioni per il parsing e l'estrazione
+@st.cache_data
 def process_pdf_llamaparse(pdf_file_path):
     """
     Funzione per elaborare il PDF utilizzando LlamaParse.
@@ -215,7 +216,11 @@ if uploaded_file is not None:
         st.markdown("---")
         st.subheader("1. Parsing del PDF in Markdown")
         with st.spinner("Attendere prego: parsing del PDF in corso..."):
-            markdown_content = process_pdf_llamaparse(pdf_file_path_for_parser)
+            if "markdown_content" not in st.session_state:
+                st.session_state.markdown_content = process_pdf_llamaparse(
+                    pdf_file_path_for_parser
+                )
+            markdown_content = st.session_state.markdown_content
 
         if os.path.exists(pdf_file_path_for_parser):
             os.remove(pdf_file_path_for_parser)
@@ -229,7 +234,9 @@ if uploaded_file is not None:
             st.markdown("---")
             st.subheader("2. Estrazione Strutturata da Markdown a JSON (via GPT)")
             with st.spinner("Attendere prego: estrazione JSON con GPT in corso..."):
-                meal_plan_json = process_md_gpt(markdown_content)
+                if "meal_plan_json" not in st.session_state:
+                    st.session_state.meal_plan_json = process_md_gpt(markdown_content)
+                meal_plan_json = st.session_state.meal_plan_json
 
             if meal_plan_json:
                 with st.expander("Visualizza JSON Strutturato", expanded=False):
