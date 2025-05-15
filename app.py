@@ -26,7 +26,7 @@ except KeyError:
 
 
 # Funzioni per il parsing e l'estrazione
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def process_pdf_llamaparse(pdf_file_path):
     """
     Funzione per elaborare il PDF utilizzando LlamaParse.
@@ -135,7 +135,7 @@ def process_md_gpt(markdown_content):
                 {"role": "user", "content": prompt},
             ],
             temperature=0,
-            max_tokens=6000,
+            max_tokens=8000,
             response_format={"type": "json_object"},
         )
         json_response_content = response.choices[0].message.content
