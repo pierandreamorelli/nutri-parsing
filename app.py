@@ -7,7 +7,7 @@ from openai import OpenAI
 
 # Header Streamlit
 st.set_page_config(page_title="Parser PDF Piani Alimentari", layout="wide")
-st.title("Analizzatore di Piani Alimentari da PDF")
+st.title("Importa Piani Alimentari in PDF")
 st.write(
     "Carica un file PDF contenente un piano alimentare. L'app estrarrà il contenuto, "
     "lo strutturerà in formato JSON e poi lo visualizzerà come testo formattato."
