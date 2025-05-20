@@ -249,15 +249,18 @@ def clear_cache():
         del st.session_state.markdown_content
     if "meal_plan_json" in st.session_state:
         del st.session_state.meal_plan_json
+    st.session_state.uploaded_file = None
     st.cache_data.clear()
-    st.success("Cache pulita! Ora puoi caricare un nuovo PDF.")
+    st.experimental_rerun()
 
 
 # Pulsante per pulire la cache
-st.sidebar.button("Pulisci cache e carica nuovo PDF", on_click=clear_cache)
+st.sidebar.button("Svuota cache e carica nuovo PDF", on_click=clear_cache)
 
 # Componente per il caricamento del file PDF
-uploaded_file = st.file_uploader("Carica il tuo file PDF", type="pdf")
+uploaded_file = st.file_uploader(
+    "Carica il tuo file PDF", type="pdf", key="uploaded_file"
+)
 
 if uploaded_file is not None:
     if not LLAMA_CLOUD_API_KEY or not OPENAI_API_KEY:
@@ -268,8 +271,8 @@ if uploaded_file is not None:
             pdf_file_path_for_parser = tmp_file.name
 
         st.markdown("---")
-        st.subheader("1. Parsing del PDF in Markdown")
-        with st.spinner("Attendere prego: parsing del PDF in corso..."):
+        st.subheader("1. Parsing del PDF")
+        with st.spinner("Attendere prego: parsing in corso..."):
             if "markdown_content" not in st.session_state:
                 st.session_state.markdown_content = process_pdf_llamaparse(
                     pdf_file_path_for_parser
@@ -286,8 +289,8 @@ if uploaded_file is not None:
                 st.markdown(f"```markdown\n{markdown_content}\n```")
 
             st.markdown("---")
-            st.subheader("2. Estrazione Strutturata (via GPT)")
-            with st.spinner("Attendere prego: estrazione JSON con GPT in corso..."):
+            st.subheader("2. Estrazione strutturata del Piano Alimentare")
+            with st.spinner("Attendere prego: estrazione in corso..."):
                 if "meal_plan_json" not in st.session_state:
                     st.session_state.meal_plan_json = process_md_gpt(markdown_content)
                 meal_plan_json = st.session_state.meal_plan_json
@@ -309,7 +312,7 @@ if uploaded_file is not None:
                 )
 
                 st.markdown("---")
-                st.subheader("3. Piano Alimentare Estratto (Formato Testo)")
+                st.subheader("3. Estrazione testuale del Piano Alimentare")
                 json_text_output = json_to_text(meal_plan_json)
 
                 st.text_area("Testo del Piano Alimentare", json_text_output, height=400)
