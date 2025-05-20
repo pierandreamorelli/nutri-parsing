@@ -249,7 +249,6 @@ def clear_cache():
         del st.session_state.markdown_content
     if "meal_plan_json" in st.session_state:
         del st.session_state.meal_plan_json
-    st.session_state.uploaded_file = None
     st.cache_data.clear()
     st.info("Cache svuotata. Ricarica manualmente la pagina per caricare un nuovo PDF.")
 
