@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import os
 import json
 import tempfile
@@ -202,6 +203,59 @@ def json_to_text(json_data):
     return "\n".join(output)
 
 
+# Funzioni per creare i DataFrame
+def get_weekly_plan(json_output):
+    giorni = json_output.get("giorni", [])
+    rows = []
+
+    for giorno in giorni:
+        giorno_row = {"giorno": giorno.get("giorno", "")}
+
+        for pasto_key in [
+            "colazione",
+            "spuntino_mattina",
+            "pranzo",
+            "spuntino_pomeriggio",
+            "cena",
+        ]:
+            pasto = giorno.get(pasto_key, {})
+            contenuto = []
+            for item in pasto.get("principale", []):
+                alimento = item.get("alimento", "")
+                quantita = item.get("quantita", "")
+                contenuto.append(f"{alimento} ({quantita})")
+            if pasto.get("alternative"):
+                alternative = [
+                    f"{item.get('alimento', '')} ({item.get('quantita', '')})"
+                    for item in pasto["alternative"]
+                ]
+                contenuto.append("Alternative: " + ", ".join(alternative))
+
+            giorno_row[pasto_key] = "\n".join(contenuto) if contenuto else ""
+
+        rows.append(giorno_row)
+
+    return pd.DataFrame(rows)
+
+
+def get_notes(json_output):
+    consigli = json_output.get("note/consigli", [])
+    return pd.DataFrame({"note/consigli": consigli})
+
+
+# Funzione per pulire la cache
+def clear_cache():
+    if "markdown_content" in st.session_state:
+        del st.session_state.markdown_content
+    if "meal_plan_json" in st.session_state:
+        del st.session_state.meal_plan_json
+    st.cache_data.clear()
+    st.success("Cache pulita! Ora puoi caricare un nuovo PDF.")
+
+
+# Pulsante per pulire la cache
+st.sidebar.button("Pulisci cache e carica nuovo PDF", on_click=clear_cache)
+
 # Componente per il caricamento del file PDF
 uploaded_file = st.file_uploader("Carica il tuo file PDF", type="pdf")
 
@@ -232,15 +286,27 @@ if uploaded_file is not None:
                 st.markdown(f"```markdown\n{markdown_content}\n```")
 
             st.markdown("---")
-            st.subheader("2. Estrazione Strutturata da Markdown a JSON (via GPT)")
+            st.subheader("2. Estrazione Strutturata (via GPT)")
             with st.spinner("Attendere prego: estrazione JSON con GPT in corso..."):
                 if "meal_plan_json" not in st.session_state:
                     st.session_state.meal_plan_json = process_md_gpt(markdown_content)
                 meal_plan_json = st.session_state.meal_plan_json
 
             if meal_plan_json:
-                with st.expander("Visualizza JSON Strutturato", expanded=False):
-                    st.json(meal_plan_json)
+                # with st.expander("Visualizza JSON Strutturato", expanded=False):
+                #    st.json(meal_plan_json)
+
+                st.subheader("2.1. Piano Alimentare Settimanale")
+                weekly_plan_df = get_weekly_plan(meal_plan_json)
+                st.dataframe(weekly_plan_df, use_container_width=True)
+
+                # Visualizzazione dataframe note/consigli
+                st.subheader("2.2. Note e Consigli")
+                notes_df = get_notes(meal_plan_json)
+                st.dataframe(notes_df, use_container_width=True)
+                st.markdown(
+                    "Puoi copiare i dati delle tabelle in Excel o Google Sheets."
+                )
 
                 st.markdown("---")
                 st.subheader("3. Piano Alimentare Estratto (Formato Testo)")
